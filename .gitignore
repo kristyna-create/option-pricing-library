@@ -18,3 +18,6 @@ venv/
 # Ignore Jupyter Notebooks and their internal checkpoints
 *.ipynb
 .ipynb_checkpoints/
+
+# Personal / Testing files
+tests/my_personal.py

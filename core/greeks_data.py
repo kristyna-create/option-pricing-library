@@ -4,7 +4,7 @@ from dataclasses import dataclass
 class Greeks:
     """
     Class for storing values of Greeks, data container.
-    Calculated risk values are immutable because of frozen - once the Greeks are calculated and stored, they can never be changed; this is added for safety.
+    Calculated risk values are immutable because of frozen parameter - once the Greeks are calculated and stored, they can never be changed; this is added for safety.
     """
     delta: float
     gamma: float
