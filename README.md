@@ -1,12 +1,16 @@
 # Option Pricing Library
 
-This library will be a professional Python implementation of various option pricing models for different types of options. 
-It is written using **Object-Oriented Programming (OOP)**. It is my personal project on which I am working because I am interested in option pricing methods and I want to get better in object-oriented programming in Python.
+A Python library for pricing European options and computing Greeks using Black-Scholes-Merton (BSM), Binomial Trees (CRR model), and Monte Carlo simulation. Built from scratch with clean OOP architecture — no AI-generated code.
 
-## Key Features
-- **Contract-Based Design**: Instruments store only contract logic (payoffs).
-- **Model Independence**: Swap between Black-Scholes, Monte Carlo, and Binomial Trees at runtime.
-- **Risk Management**: Dedicated `Greeks` container for managing first and second-order sensitivities.
+## Features
+- **Separation of instruments and engines** — options define contract logic (payoffs), pricers implement the math. Swap pricing models at runtime without changing instrument code.
+- **Risk management - Greeks** — closed-form delta, gamma, vega, theta, and rho with correct limiting behavior at expiry and zero volatility from BSM, and numerical Greeks.
+- **Robust edge case handling** — maturity limits, zero-volatility pricing, input validation with clear error messages.
+- **Put-call parity validated** — tested against known reference values and arbitrage-free relationships using `pytest`.
+- **Extensible for exotics** — architecture designed so adding new option types (barriers, Asians) requires only new subclasses, no changes to existing code.
+
+## Architecture
+Designed using UML class diagrams before writing any code. See below for the full diagram.
 
 ## Architecture
 ```mermaid

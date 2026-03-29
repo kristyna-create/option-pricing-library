@@ -24,7 +24,7 @@ class BaseOption(ABC):
         self._validate_strike_price()
         self._validate_expiry_date()
 
-    # other methods:
+    # data validation methods:
     def _validate_strike_price(self):
         if not isinstance(self.strike_price, (int, float)):
             raise TypeError(f"strike_price must be a number (float or integer), got {type(self.strike_price)}")
