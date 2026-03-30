@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from datetime import date
 from abc import ABC, abstractmethod # for abstract classes and abstract methods
 import math
+import numpy as np
 
 # other imports - for classes we will yet implement: BasePricer, MarketEnvironment, Greeks
 if TYPE_CHECKING:
@@ -56,5 +57,5 @@ class BaseOption(ABC):
 
     # get_payoff() - abstract method, different for each option
     @abstractmethod
-    def get_payoff(self, spot_price: float) -> float:
+    def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
         pass

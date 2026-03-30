@@ -21,7 +21,7 @@ classDiagram
         +date expiry_date
         +price(pricer: BasePricer, market_env: MarketEnvironment) float
         +greeks(pricer: BasePricer, market_env: MarketEnvironment) Greeks
-        +get_payoff(spot_price: float)* float
+        +get_payoff(spot_price: float|np.ndarray)* float|np.ndarray
         +time_to_maturity(pricing_date: date) float
 
     }
@@ -34,7 +34,7 @@ class OptionType {
 
 class EuropeanOption {
     +OptionType option_type
-    +get_payoff(spot_price: float) float
+    +get_payoff(spot_price: float|np.ndarray) float|np.ndarray
 }
 
 BaseOption <|-- EuropeanOption
@@ -59,7 +59,7 @@ class Greeks {
 class BasePricer {
     <<abstract>>
     -_calculate_price(option: BaseOption, market_env: MarketEnvironment)* float
-    -_calculate_greeks(option: BaseOption, market_env: MarketEnvironment)* Greeks
+    -_calculate_greeks(option: BaseOption, market_env: MarketEnvironment) Greeks
 }
 
 class BlackScholesMertonPricer {
@@ -72,9 +72,8 @@ BasePricer <|-- BlackScholesMertonPricer
 class MonteCarloPricer {
     +int num_paths
     +int num_steps
-    +int random_seed
+    +int|None random_seed
     -_calculate_price(option: BaseOption, market_env: MarketEnvironment) float
-    -_calculate_greeks(option: BaseOption, market_env: MarketEnvironment) Greeks
 }
 
 BasePricer <|-- MonteCarloPricer
@@ -82,7 +81,6 @@ BasePricer <|-- MonteCarloPricer
 class BinomialTreePricer {
     +int num_tree_steps
     -_calculate_price(option: BaseOption, market_env: MarketEnvironment) float
-    -_calculate_greeks(option: BaseOption, market_env: MarketEnvironment) Greeks
 }
 
 BasePricer <|-- BinomialTreePricer

@@ -1,3 +1,4 @@
+import numpy as np
 from datetime import date
 
 from core.option_base import BaseOption
@@ -18,11 +19,11 @@ class EuropeanOption(BaseOption): # EuropeanOption is a subclass of BaseOption
             raise TypeError(f"option_type must be one of: {valid_types}, got {repr(self.option_type)}") # repr() gives the precise representation of an object, good for debugging
     
     # Essential get_payoff() method - here for European options
-    def get_payoff(self, spot_price: float) -> float:
+    def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
         if self.option_type == OptionType.CALL:
-            return max(spot_price - self.strike_price, 0.0)
+            return np.maximum(spot_price - self.strike_price, 0.0)
         elif self.option_type == OptionType.PUT:
-            return max(self.strike_price - spot_price, 0.0)
+            return np.maximum(self.strike_price - spot_price, 0.0)
         else:
             valid_types = ", ".join(str(t) for t in OptionType)
             raise ValueError(f"get_payoff() method is currently implemented only for {valid_types} and you inserted {repr(self.option_type)}!")

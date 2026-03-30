@@ -21,3 +21,4 @@ venv/
 
 # Personal / Testing files
 tests/my_personal.py
+*.png

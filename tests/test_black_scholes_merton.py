@@ -8,7 +8,7 @@ from market.environment import MarketEnvironment
 
 from engines.black_scholes_merton import BlackScholesMertonPricer
 
-#----------------------------- Option values test
+#----------------------------- Option values test - known values
 # known values are obtained from the online BSM calculator here: https://www.omnicalculator.com/finance/black-scholes and here: https://quantpie.co.uk/oup/oup_bsm_price_greeks.php
 
 def test_call_pricing_known_value():

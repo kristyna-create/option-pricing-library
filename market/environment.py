@@ -12,7 +12,7 @@ class MarketEnvironment:
     dividend_yield: float | int
     pricing_date: date
 
-    # Validation of input data using __post_init__
+    # Validation of input data using __post_init__ (for dataclasses)
     def __post_init__(self):
         self._validate_spot_price()
         self._validate_risk_free_rate()
