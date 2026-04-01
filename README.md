@@ -4,7 +4,7 @@ A Python library for pricing European options and computing Greeks using Black-S
 
 ## Features
 - **Separation of instruments and engines** — options define contract logic (payoffs), pricers implement the math. Swap pricing models at runtime without changing instrument code.
-- **Risk management - Greeks** — closed-form delta, gamma, vega, theta, and rho with correct limiting behavior at expiry and zero volatility from BSM, and numerical Greeks.
+- **Risk management (Greeks)** — closed-form delta, gamma, vega, theta, and rho with correct limiting behavior at expiry and zero volatility from BSM, and numerical Greeks.
 - **Robust edge case handling** — maturity limits, zero-volatility pricing, input validation with clear error messages.
 - **Put-call parity validated** — tested against known reference values and arbitrage-free relationships using `pytest`.
 - **Extensible for exotics** — architecture designed so adding new option types (barriers, Asians) requires only new subclasses, no changes to existing code.
