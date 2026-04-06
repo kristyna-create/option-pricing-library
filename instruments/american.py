@@ -5,12 +5,12 @@ import math
 from core.option_base import BaseOption
 from core.enums import OptionType
 
-class EuropeanOption(BaseOption): # EuropeanOption is a subclass of BaseOption
-    def __init__(self, expiry_date: date, option_type: OptionType, strike_price: float | int):
+class AmericanOption(BaseOption):
+    def __init__(self, expiry_date: date, option_type: OptionType, strike_price: int | float):
         super().__init__(expiry_date = expiry_date)
         self.option_type = option_type
         self.strike_price = strike_price
-        
+
         # Input data validation
         self._validate_option_type()
         self._validate_strike_price()
@@ -28,17 +28,17 @@ class EuropeanOption(BaseOption): # EuropeanOption is a subclass of BaseOption
             raise ValueError("strike_price cannot be infinite or NaN")
         if self.strike_price <= 0.0: 
             raise ValueError("strike_price must be positive")    
-    
-    # Essential get_payoff() method - here for European options
+        
+    # Essential get_payoff() method - for American options    
     def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
-        """Computes the payoff of the European option at expiry.
+        """Computes the payoff of the American option.
             For a call: max(spot_price - strike_price, 0)
             For a put: max(strike_price - spot_price, 0)
 
             Args:
-                spot_price: The underlying asset price at expiry. Accepts a single
+                spot_price: The underlying asset price at the current point in time. Accepts a single
                     float for scalar pricing or a numpy array for vectorized pricing
-                    across multiple terminal prices (e.g. Monte Carlo or binomial tree).
+                    across multiple spot prices (e.g. for a binomial tree).
                     
             Returns:
                 The option payoff(s), matching the type and shape of spot_price.
@@ -49,4 +49,4 @@ class EuropeanOption(BaseOption): # EuropeanOption is a subclass of BaseOption
             return np.maximum(self.strike_price - spot_price, 0.0)
         else:
             valid_types = ", ".join(str(t) for t in OptionType)
-            raise ValueError(f"get_payoff() method is currently implemented only for {valid_types} and you inserted {repr(self.option_type)}!")
+            raise ValueError(f"get_payoff() method is currently implemented only for {valid_types} and you inserted {repr(self.option_type)}!")    

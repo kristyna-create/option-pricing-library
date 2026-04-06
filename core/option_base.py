@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 
 from datetime import date
 from abc import ABC, abstractmethod # for abstract classes and abstract methods
-import math
 import numpy as np
 
 # other imports - for classes we will yet implement: BasePricer, MarketEnvironment, Greeks
@@ -17,23 +16,13 @@ from market.environment import MarketEnvironment
 # it will inherit from ABC class (from module abc)
 # use @abstractmethod decorator on methods that subclasses must implement on their own - abstract methods
 class BaseOption(ABC):
-    def __init__(self, strike_price: float | int, expiry_date: date):
-        self.strike_price = strike_price # later this might have to be implemented at the subclasses level (e.g. Asian option with floating strike)
+    def __init__(self, expiry_date: date):
         self.expiry_date = expiry_date
 
         # Input data validation
-        self._validate_strike_price()
         self._validate_expiry_date()
 
-    # data validation methods:
-    def _validate_strike_price(self):
-        if not isinstance(self.strike_price, (int, float)):
-            raise TypeError(f"strike_price must be a number (float or integer), got {type(self.strike_price)}")
-        if not math.isfinite(self.strike_price):
-            raise ValueError("strike_price cannot be infinite or NaN")
-        if self.strike_price <= 0.0: 
-            raise ValueError("strike_price must be positive")
-        
+    # Input data validation method
     def _validate_expiry_date(self):
         if not isinstance(self.expiry_date, date):
             raise TypeError(f"expiry_date must be a date (datetime.date), got {type(self.expiry_date)}") 
@@ -57,5 +46,5 @@ class BaseOption(ABC):
 
     # get_payoff() - abstract method, different for each option
     @abstractmethod
-    def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
+    def get_payoff(self, *args, **kwargs) -> float | np.ndarray:
         pass

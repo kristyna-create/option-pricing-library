@@ -3,10 +3,13 @@ from typing import TYPE_CHECKING
 from abc import ABC, abstractmethod
 from dataclasses import replace
 from datetime import timedelta
+import warnings
 
 if TYPE_CHECKING:
     from core.option_base import BaseOption
 from instruments.european import EuropeanOption
+from instruments.american import AmericanOption
+from instruments.asian import AsianOption
 from core.greeks_data import Greeks
 from market.environment import MarketEnvironment
 
@@ -24,9 +27,9 @@ class BasePricer(ABC):
 
     # numerical method to be used with numerical pricing engines that will inherit it
     def _calculate_greeks(self, option: BaseOption, market_env: MarketEnvironment) -> Greeks: 
-        """Calculates delta, gamma, vega, theta, and rho using finite differences. This is implemented as a concrete method because it is similar for Binomial Trees and Monte Carlo pricers. BlackScholesMertonPricer overrides this method with closed-form implementation."""    
-        if not isinstance(option, EuropeanOption):
-            raise TypeError("Greeks computation is currently implemented only for EuropeanOption instances!")
+        """Calculates delta, gamma, vega, theta, and rho using finite differences. This is implemented as a concrete method because it is similar for Binomial Trees and Monte Carlo pricers. BlackScholesMertonPricer overrides this method with a closed-form implementation."""    
+        if not isinstance(option, (EuropeanOption, AmericanOption, AsianOption)):
+            raise TypeError("Greeks computation is currently implemented only for EuropeanOption, AmericanOption, and AsianOption instances!")
 
         # benchmark price using current market environment
         price = self._calculate_price(option, market_env)
@@ -61,7 +64,12 @@ class BasePricer(ABC):
         dt = self.THETA_DAYS/365 # annualized theta
         
         if (market_env.pricing_date + timedelta(days=self.THETA_DAYS)) > option.expiry_date: # pricing_date cannot be after expiry_date
-            price_tomorrow = option.get_payoff(market_env.spot_price) # get option value at expiry
+            warnings.warn(f"Theta computation: pricing_date = {market_env.pricing_date} + {self.THETA_DAYS} day(s) exceeds the option's expiry_date ({option.expiry_date}). For path-dependent options (e.g. Asian), theta is set to 0.0. For path-independent options, the expiry payoff is used as the forward price.")
+
+            if isinstance(option, (EuropeanOption, AmericanOption)):
+                price_tomorrow = option.get_payoff(market_env.spot_price) # get option value at expiry
+            elif isinstance(option, AsianOption): 
+                price_tomorrow = 0.0 # At maturity, Asian option's value without path history is meaningless, so price_tomorrow = 0.0 and price = 0.0, giving theta = 0.0
             # numerical theta at expiry will be zero by construction 
         else:    
             market_env_tomorrow = replace(market_env, pricing_date = market_env.pricing_date + timedelta(days=self.THETA_DAYS))

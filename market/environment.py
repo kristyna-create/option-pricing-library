@@ -9,8 +9,8 @@ class MarketEnvironment:
     spot_price: float | int
     risk_free_rate: float | int
     volatility: float | int
-    dividend_yield: float | int
     pricing_date: date
+    dividend_yield: float | int = 0.0
 
     # Validation of input data using __post_init__ (for dataclasses)
     def __post_init__(self):

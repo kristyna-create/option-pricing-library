@@ -15,10 +15,11 @@ venv/
 # OS files
 .DS_Store
 
-# Ignore Jupyter Notebooks and their internal checkpoints
-*.ipynb
+# Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
 
 # Personal / Testing files
 tests/my_personal.py
-*.png
+
+## Exclude my personal folder with notes regarding the project
+notes/

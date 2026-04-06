@@ -13,7 +13,7 @@ class BlackScholesMertonPricer(BasePricer):
 
     TOLERANCE = 1e-10 # class-level constant for floating-point comparisons
 
-    def _compute_d1_d2(self, option: BaseOption, market_env: MarketEnvironment, T_minus_t: float) -> tuple:
+    def _compute_d1_d2(self, option: EuropeanOption, market_env: MarketEnvironment, T_minus_t: float) -> tuple:
             d1 = (math.log(market_env.spot_price / option.strike_price) + (market_env.risk_free_rate - market_env.dividend_yield + 0.5 * market_env.volatility**2) * T_minus_t) / (market_env.volatility * math.sqrt(T_minus_t))
 
             d2 = d1 - market_env.volatility * math.sqrt(T_minus_t)
@@ -22,7 +22,7 @@ class BlackScholesMertonPricer(BasePricer):
     
     # The core of this class - pricing method:
     def _calculate_price(self, option: BaseOption, market_env: MarketEnvironment) -> float:
-        """Calculates the option price of EuropeanOption instances according to Black-Scholes-Merton."""
+        """Calculates the option price of EuropeanOption instances according to Black-Scholes-Merton using analytical formulae."""
         if not isinstance(option, EuropeanOption):
             raise TypeError("BSM pricing is mathematically valid only for EuropeanOption instances!")
         
