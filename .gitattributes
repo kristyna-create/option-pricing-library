@@ -1,0 +1,2 @@
+# Tell GitHub's language detector to treat notebooks as "vendored" (third-party) code and exclude them from the statistics
+*.ipynb linguist-vendored
