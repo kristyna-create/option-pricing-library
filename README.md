@@ -11,23 +11,10 @@ A Python library for pricing European, American, and Asian options and computing
 - **Separation of instruments and engines** — options define contract logic (payoffs), pricers implement the math. Swap pricing models at runtime without changing instrument code.
 - **Risk management (Greeks)** — closed-form delta, gamma, vega, theta, and rho from BSM with correct limiting behavior at expiry and zero volatility. Numerical Greeks via finite differences for Binomial Tree and Monte Carlo pricers.
 - **Robust edge case handling** — maturity limits, zero-volatility pricing, numerical overflow detection, input validation with clear error messages.
-- **Comprehensive test suite** — 50+ tests using `pytest`: known reference values from Hull and online calculators, convergence tests (Binomial Tree and Monte Carlo vs BSM), put-call parity, American vs European price bounds, Asian vs European price bounds, Greek sanity checks, input validation, and Monte Carlo reproducibility.
+- **High-Performance Vectorization:** The `BlackScholesMertonPricer` natively supports NumPy arrays across all `MarketEnvironment` variables (Spot, Volatility, Rates, Dividends). This allows for the rapid computation of pricing surfaces and risk profiles across tens of thousands of scenarios by entirely avoiding slow Python `for` loops.
+- **Comprehensive test suite** — 60+ tests using `pytest`: known reference values from Hull and online calculators, convergence tests (Binomial Tree and Monte Carlo vs BSM), put-call parity, American vs European price bounds, Asian vs European price bounds, Greek sanity checks, input validation, and Monte Carlo reproducibility.
 - **Extensible architecture** — adding new option types (e.g. barrier options) requires only new subclasses, no changes to existing code. UML class diagrams designed before implementation.
 
-## Quick Example
-```python
-from datetime import date
-from core.enums import OptionType
-from instruments.european import EuropeanOption
-from market.environment import MarketEnvironment
-from engines.black_scholes_merton import BlackScholesMertonPricer
-
-option = EuropeanOption(strike_price=100, expiry_date=date(2027, 3, 18), option_type=OptionType.CALL)
-market = MarketEnvironment(spot_price=100, risk_free_rate=0.05, volatility=0.25, pricing_date=date(2026, 3, 18))
-
-price = option.price(pricer=BlackScholesMertonPricer(), market_env=market)
-greeks = option.greeks(pricer=BlackScholesMertonPricer(), market_env=market)
-```
 
 <!-- ## Research Notebooks
 See the `notebooks/` folder for interactive examples demonstrating the library in practice, including convergence analysis, payoff diagrams, Greek surfaces, and comparisons across pricing engines. -->
@@ -52,8 +39,6 @@ class OptionType {
     CALL 
     PUT
 }  
-
-
 
 class EuropeanOption {
     +OptionType option_type
@@ -91,19 +76,19 @@ AsianOption --> OptionType
 AsianOption --> AsianType
 
 class MarketEnvironment {
-    +float spot_price
-    +float risk_free_rate
-    +float volatility
-    +float dividend_yield
+    +float|np.ndarray spot_price
+    +float|np.ndarray risk_free_rate
+    +float|np.ndarray volatility
+    +float|np.ndarray dividend_yield
     +date pricing_date
 }
 
 class Greeks {
-    +float delta
-    +float gamma
-    +float vega
-    +float theta
-    +float rho
+    +float|np.ndarray delta
+    +float|np.ndarray gamma
+    +float|np.ndarray vega
+    +float|np.ndarray theta
+    +float|np.ndarray rho
 }
 
 class BasePricer {
@@ -113,7 +98,7 @@ class BasePricer {
 }
 
 class BlackScholesMertonPricer {
-    -_calculate_price(option: BaseOption, market_env: MarketEnvironment) float
+    -_calculate_price(option: BaseOption, market_env: MarketEnvironment) float|np.ndarray
     -_calculate_greeks(option: BaseOption, market_env: MarketEnvironment) Greeks    
 }
 
@@ -142,4 +127,39 @@ BaseOption ..> Greeks : returns
 BasePricer ..> BaseOption : uses 
 BasePricer ..> MarketEnvironment : uses 
 BasePricer ..> Greeks : returns
+```
+
+
+## Quick Start: Vectorized Greeks Calculation
+
+The library is designed for rapid quantitative research. By passing NumPy arrays into the `MarketEnvironment`, the BSM engine automatically vectorizes the calculations, correctly handling edge cases like zero-volatility and expiration limits.
+
+```python
+import numpy as np
+from datetime import date, timedelta
+from core.enums import OptionType
+from instruments.european import EuropeanOption
+from market.environment import MarketEnvironment
+from engines.black_scholes_merton import BlackScholesMertonPricer
+
+# 1. Define the Option Contract
+expiry = date.today() + timedelta(days=90)
+call_option = EuropeanOption(strike_price=100.0, expiry_date=expiry, option_type=OptionType.CALL)
+
+# 2. Define a Vectorized Market Environment (Array of Spot Prices)
+spot_prices = np.linspace(80, 120, 500) # 500 different spot scenarios
+market = MarketEnvironment(
+    spot_price=spot_prices,
+    risk_free_rate=0.05,
+    volatility=0.20,
+    dividend_yield=0.02,
+    pricing_date=date.today()
+)
+
+# 3. Calculate 500 prices and Greeks instantly (No loops!)
+bsm_engine = BlackScholesMertonPricer()
+prices = call_option.price(pricer=bsm_engine, market_env=market)
+greeks = call_option.greeks(pricer=bsm_engine, market_env=market)
+
+# prices is now a NumPy array of 500 option values and greeks.delta is now a NumPy array of 500 Delta values
 ```

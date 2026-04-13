@@ -30,7 +30,7 @@ class AmericanOption(BaseOption):
             raise ValueError("strike_price must be positive")    
         
     # Essential get_payoff() method - for American options    
-    def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
+    def get_payoff(self, spot_price: int | float | np.ndarray) -> float | np.ndarray:
         """Computes the payoff of the American option.
             For a call: max(spot_price - strike_price, 0)
             For a put: max(strike_price - spot_price, 0)

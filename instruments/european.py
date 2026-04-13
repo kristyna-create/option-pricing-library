@@ -30,7 +30,7 @@ class EuropeanOption(BaseOption): # EuropeanOption is a subclass of BaseOption
             raise ValueError("strike_price must be positive")    
     
     # Essential get_payoff() method - here for European options
-    def get_payoff(self, spot_price: float | np.ndarray) -> float | np.ndarray:
+    def get_payoff(self, spot_price: int | float | np.ndarray) -> float | np.ndarray:
         """Computes the payoff of the European option at expiry.
             For a call: max(spot_price - strike_price, 0)
             For a put: max(strike_price - spot_price, 0)

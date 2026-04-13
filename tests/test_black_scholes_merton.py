@@ -1,6 +1,7 @@
 import pytest 
-from datetime import date
+from datetime import date, timedelta
 import math
+import numpy as np
 
 from core.enums import OptionType
 from instruments.european import EuropeanOption
@@ -27,7 +28,7 @@ def european_put_option_2():
 
 
 #----------------------------- Option values test - known values
-# known values are obtained from the online BSM calculator here: https://www.omnicalculator.com/finance/black-scholes and here: https://quantpie.co.uk/oup/oup_bsm_price_greeks.php
+# known values are obtained from the online BSM calculator here: https://www.omnicalculator.com/finance/black-scholes and here: https://www.quantpie.co.uk/inp/inp_bsm_price_greeks.php
 
 def test_call_pricing_known_value(market_env_1, european_call_option_1):
     assert european_call_option_1.price(pricer=BlackScholesMertonPricer(), market_env=market_env_1) == pytest.approx(10.83, abs=0.01)
@@ -81,7 +82,7 @@ def test_inputs(market_env_inputs, error_type, exception_str):
     assert exception_str in str(exc_info.value)        
 
 #----------------------------- Greek values test
-# known values are obtained from the online BSM calculator here: https://quantpie.co.uk/oup/oup_bsm_price_greeks.php   
+# known values are obtained from the online BSM calculator here: https://www.quantpie.co.uk/inp/inp_bsm_price_greeks.php  
 
 def test_call_Greeks_known_value(european_call_option_2, market_env_3):
     test_greeks = european_call_option_2.greeks(pricer=BlackScholesMertonPricer(), market_env=market_env_3) # Compute the Greeks for the test
@@ -118,3 +119,120 @@ def test_put_Greeks_zero_vol(market_env_2, european_put_option_2):
     assert test_greeks.vega == pytest.approx(0, abs=0.0001)
     assert test_greeks.theta == pytest.approx(-2.5098, abs=0.0001)
     assert test_greeks.rho == pytest.approx(-237.9311, abs=0.0001)    
+
+#----------------------------- Test vectorization
+# Vectorized spot prices test (price and Greeks verification)
+def test_vectorized_spot_prices():
+    spot_array = np.linspace(80, 120, 500)
+    test_market_vectorized = MarketEnvironment(spot_price=spot_array, risk_free_rate=0.05, volatility=0.20, dividend_yield=0.02, pricing_date=date.today())
+
+    expiry = date.today() + timedelta(days=90)
+    call_option = EuropeanOption(strike_price=100, expiry_date=expiry, option_type=OptionType.CALL)
+    
+    bsm_engine = BlackScholesMertonPricer()
+
+    # Vectorized outputs
+    vectorized_prices = call_option.price(pricer=bsm_engine, market_env=test_market_vectorized)
+    vectorized_greeks = call_option.greeks(pricer=bsm_engine, market_env=test_market_vectorized)
+
+    # Scalar outputs - using a for loop
+    scalar_prices = []
+    scalar_greeks = []
+    for spot in spot_array:
+        test_market = MarketEnvironment(spot_price=spot, risk_free_rate=0.05, volatility=0.20, dividend_yield=0.02, pricing_date=date.today())
+        scalar_prices.append(call_option.price(pricer=bsm_engine, market_env=test_market))
+        scalar_greeks.append(call_option.greeks(pricer=bsm_engine, market_env=test_market))
+
+    # Assert that prices are identical
+    np.testing.assert_allclose(vectorized_prices, scalar_prices, atol=1e-4)  
+
+    # Assert that Greeks are identical
+    scalar_deltas = [greek.delta for greek in scalar_greeks]
+    np.testing.assert_allclose(vectorized_greeks.delta, scalar_deltas, atol=1e-4) 
+
+    scalar_gammas = [greek.gamma for greek in scalar_greeks]
+    np.testing.assert_allclose(vectorized_greeks.gamma, scalar_gammas, atol=1e-4) 
+
+    scalar_vegas = [greek.vega for greek in scalar_greeks]
+    np.testing.assert_allclose(vectorized_greeks.vega, scalar_vegas, atol=1e-4) 
+
+    scalar_thetas = [greek.theta for greek in scalar_greeks]
+    np.testing.assert_allclose(vectorized_greeks.theta, scalar_thetas, atol=1e-4) 
+
+    scalar_rhos = [greek.rho for greek in scalar_greeks]
+    np.testing.assert_allclose(vectorized_greeks.rho, scalar_rhos, atol=1e-4) 
+
+# Broadcasting dimension test (Greeks)
+def test_broadcasting_Greeks():
+    spot_array = np.linspace(50, 150, 50)
+    test_market = MarketEnvironment(spot_price=spot_array, risk_free_rate=0.15, volatility=0.5, dividend_yield=0.05, pricing_date=date.today())
+
+    expiry = date.today() + timedelta(days=90)
+    put_option = EuropeanOption(strike_price=100, expiry_date=expiry, option_type=OptionType.PUT)
+    
+    bsm_engine = BlackScholesMertonPricer()
+    greeks = put_option.greeks(pricer=bsm_engine, market_env=test_market)
+
+    assert np.shape(greeks.delta) == (50,)
+    assert np.shape(greeks.gamma) == (50,)
+    assert np.shape(greeks.vega) == (50,)
+    assert np.shape(greeks.theta) == (50,)
+    assert np.shape(greeks.rho) == (50,)
+
+# Check for Zero-Vol edge case
+def test_zero_vol():
+    vols = np.array([0.0, 0.20, 0.0])
+    market = MarketEnvironment(spot_price=100, risk_free_rate=0.08, volatility=vols, dividend_yield=0.02, pricing_date=date.today())
+
+    expiry = date.today() + timedelta(days=180)
+    call_option = EuropeanOption(strike_price=100, expiry_date=expiry, option_type=OptionType.CALL)
+
+    prices_array = call_option.price(pricer=BlackScholesMertonPricer(), market_env=market)
+
+    # Values obtained from https://www.omnicalculator.com/finance/black-scholes
+    Expected_Zero_Vol_Price = 2.89
+    Expected_Normal_Price = 7.02
+
+    np.testing.assert_allclose(prices_array, [Expected_Zero_Vol_Price, Expected_Normal_Price, Expected_Zero_Vol_Price], atol=1e-02)
+
+# Test that vectorized warnings fire correctly when at least one element in an array hits a boundary condition
+def test_bsm_greeks_warnings_vectorized():
+    bsm_engine = BlackScholesMertonPricer()
+    strike = 100
+    pricing_date = date(2026, 3, 18)
+    
+    # 1. TEST: ATM Spot at Expiry (T=0)
+    # Create an array of spots: [90, 100, 110]. Only 100 is ATM.
+    market_expiry = MarketEnvironment(
+        spot_price=np.array([90, 100, 110]),
+        risk_free_rate=0.05,
+        volatility=0.20,
+        dividend_yield=0.02,
+        pricing_date=pricing_date
+    )
+    
+    # Option expires TODAY
+    call_at_expiry = EuropeanOption(strike_price=strike, expiry_date=pricing_date, option_type=OptionType.CALL)
+
+    # We expect the ATM Expiry warning
+    with pytest.warns(UserWarning, match="One or more inputs result in an At-The-Money \\(ATM\\) spot price at expiry"):
+        call_at_expiry.greeks(pricer=bsm_engine, market_env=market_expiry)
+
+    # 2. TEST: ATM Forward with Zero Volatility (T > 0)
+    # To hit ATM Forward easily, we set r = q so drift is zero, then Spot 100 == Strike 100.
+    # We pass an array of volatilities where one element is 0.0.
+    market_zero_vol = MarketEnvironment(
+        spot_price=100,
+        risk_free_rate=0.05,
+        volatility=np.array([0.20, 0.0, 0.40]), # One zero-vol element
+        dividend_yield=0.05,                   # r = q ensures ATM Forward
+        pricing_date=pricing_date
+    )
+    
+    # Option has 6 months left
+    opt_long = EuropeanOption(strike_price=strike, expiry_date=pricing_date + timedelta(days=180), option_type=OptionType.CALL)
+
+    # We expect the ATM Forward Zero Vol warning
+    with pytest.warns(UserWarning, match="One or more inputs result in an At-The-Money \\(ATM\\) forward price under zero volatility"):
+        opt_long.greeks(pricer=bsm_engine, market_env=market_zero_vol)
+

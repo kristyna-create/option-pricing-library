@@ -53,6 +53,19 @@ class MonteCarloPricer(BasePricer):
         
     # The core of this class - pricing method:
     def _calculate_price(self, option: BaseOption, market_env: MarketEnvironment) -> float:
+        # Vectorized pricing is only supported by the BlackScholesMertonPricer - check if market_env variables are not arrays
+        vars = {
+            "spot_price": market_env.spot_price,
+            "risk_free_rate": market_env.risk_free_rate,
+            "volatility": market_env.volatility,
+            "dividend_yield": market_env.dividend_yield
+        }
+        arrays = [name for name, value in vars.items() if isinstance(value, np.ndarray)]
+        if arrays:
+            np_arrays = ", ".join(arrays)
+            raise TypeError(f"The MonteCarloPricer currently only supports scalar (single number) market inputs, while these inputs are NumPy arrays: {np_arrays}. Vectorized pricing is only supported by the BlackScholesMertonPricer.")
+        
+        # Value the option
         T_minus_t = option.time_to_maturity(market_env.pricing_date)
 
         if isinstance(option, EuropeanOption):
