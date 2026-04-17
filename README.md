@@ -1,6 +1,6 @@
 # Option Pricing Library
 
-A Python library for pricing European, American, and Asian options and computing Greeks using Black-Scholes-Merton (BSM), Binomial Trees (CRR model), and Monte Carlo simulation. Built from scratch with clean OOP architecture — no AI-generated code.
+A Python library for pricing European, American, and Asian options and computing Greeks using Black-Scholes-Merton (BSM), Binomial Trees (CRR model), and Monte Carlo simulation. Built from scratch with clean OOP architecture — no AI-generated code (except for plotting in the research notebooks).
 
 ## Supported Instruments
 - **European options** — priced via BSM (closed-form), Binomial Tree, and Monte Carlo
@@ -18,6 +18,9 @@ A Python library for pricing European, American, and Asian options and computing
 
 <!-- ## Research Notebooks
 See the `notebooks/` folder for interactive examples demonstrating the library in practice, including convergence analysis, payoff diagrams, Greek surfaces, and comparisons across pricing engines. -->
+
+## Research Notebooks
+See the `notebooks/` folder for interactive examples demonstrating the library in practice, including convergence analysis, Greek analysis, and comparisons across pricing engines.
 
 ## Architecture
 Designed using UML class diagrams before writing any code. See below for the full diagram.
